@@ -4,13 +4,22 @@
     width: 100vw;
     height: 100vh;
     background-color: #8db9ff;
+    background-image: url("/water1.png");
     justify-content: center;
     align-items: center;
   }
 
-canvas {
-  }
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
 
+  canvas {
+    display: block;
+    background: url('ocean-texture.jpg') repeat; /* Use your ocean image here */
+    background-size: cover; /* Optional for better scaling */
+}
 
 .ship {
     position: relative;
