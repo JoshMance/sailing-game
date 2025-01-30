@@ -93,19 +93,24 @@
 
 
         
-        const squareVertices = new Float32Array([
-            -0.03, -0.2, // Bottom-left
-             0.03, -0.2, // Bottom-right
-            -0.03,  0.2, // Top-left
-            -0.03,  0.2, // Top-left
-             0.03, -0.2, // Bottom-right
-             0.03,  0.2  // Top-right
-        ]);
+        // Creating the points for the ship's hull
+        const shipBaseVertices = [0,0];
+        let a = 0.05;
+        let b = 0.3;
+        let res = 1000;
+        for (let i = 0; i <= res; i++) {
+            let theta = (i/res)*2*Math.PI;
+            var x = a*Math.sin(theta);
+            var y = b*Math.cos(theta);
+            shipBaseVertices.push(x);
+            shipBaseVertices.push(y);
+        }
+
 
         // Create buffer
         const buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, squareVertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(shipBaseVertices), gl.STATIC_DRAW);
 
         // Link attribute
         const positionLocation = gl.getAttribLocation(program, "a_position");
@@ -114,7 +119,6 @@
 
         // Get uniform location for movement and rotation
         const translationLocation = gl.getUniformLocation(program, "u_translation");
-
         const rotationLocation = gl.getUniformLocation(program, "u_rotation");
 
 
@@ -137,6 +141,7 @@
         // Viewer's reference frame
         let position = [0, 0];
         let velocity = [0, 0];
+        let acceleration = [0, 0];
         let rotation = 0;
 
         // ships reference frame
@@ -146,9 +151,6 @@
 
             velocity = rotatePoint(shipVelocity, rotation);
             position = addVectors(position, velocity);
-            
-
-      
 
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -156,16 +158,17 @@
             gl.uniform2fv(translationLocation, position);
             gl.uniform1f(rotationLocation, rotation);
 
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, shipBaseVertices.length / 2);
+
+
 
             requestAnimationFrame(drawScene);
         }
 
         // Keyboard controls
         window.addEventListener("keydown", (event) => {
-            const acceleration = 0.005;
-            if (event.key === "w") shipVelocity[1] += acceleration;
-            if (event.key === "s") shipVelocity[1] -= acceleration;
+            if (event.key === "w") shipVelocity[1] += 0.001;
+            if (event.key === "s") shipVelocity[1] -= 0.001;
             if (event.key === "a") {
                 rotation += 0.02;
             }
