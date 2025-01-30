@@ -1,68 +1,19 @@
 
 :root {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    background-color: #8db9ff;
-    background-image: url("/water1.png");
-    justify-content: center;
-    align-items: center;
-  }
-
-  body, html {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background-color: #1076bb;
 }
 
-  canvas {
-    display: block;
-    background: url('ocean-texture.jpg') repeat; /* Use your ocean image here */
-    background-size: cover; /* Optional for better scaling */
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.ship {
-    position: relative;
-    display: flex;
-    transition: transform 0.1s linear;
-    background: url("/retina_wood.png");
-    border-style: solid;
-    border-width: 0.2vw;
-    border-color: #8d8952;
-    width: 3vw;
-    height:12vw;
-    z-index: 1;
-    border-radius: 50%;
-    -webkit-border-radius: 50%;
-    -moz-border-radius: 50%;
-    -ms-border-radius: 50%;
-    -o-border-radius: 50%;
-    -webkit-transition: transform 0.1s linear;
-    -moz-transition: transform 0.1s linear;
-    -ms-transition: transform 0.1s linear;
-    -o-transition: transform 0.1s linear;
-}
-
-
-.rudder {
-    content: "";
-    position: absolute;
-    top: 104%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transition: transform 0.1s linear; 
-    width: 0.3vw;
-    height: 1vw;
-    z-index: 0;
-    background-color: #8d8952;
-    border-radius: 5%;
-    border-top-right-radius: 50%;
-    -webkit-border-radius: 5%;
-    -moz-border-radius: 5%;
-    -ms-border-radius: 5%;
-    -o-border-radius: 5%;
-    -webkit-transform: translate(-50%, -50%);
-    -moz-transform: translate(-50%, -50%);
-    -ms-transform: translate(-50%, -50%);
-    -o-transform: translate(-50%, -50%);
+canvas {
+  height: 100vh;
+  width: 100vh;
+  background-color: #1076bb;
 }

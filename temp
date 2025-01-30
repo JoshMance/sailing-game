@@ -1,0 +1,254 @@
+"use strict";
+let shipCanvas;
+let shipContext;
+let oceanCanvas;
+let oceanContext;
+
+// Note: split up the movement logic and the drawing
+let shipPosition = [500, 500];
+let shipVelocity = [0, -10];
+let shipAcceleration = [10, -10];
+
+const dt = 1 / 60; // Time step for 60fps
+
+let shipAngle = 0;
+let windAngle = Math.PI;
+
+let shipPath = [shipPosition.slice()];
+
+let oceanPosition = [0, 0]; // Initial position of the ocean
+
+let waterImage = new Image();
+waterImage.src = 'water1.png'; // Set the source to your water texture
+
+function updateAcceleration() {
+    let theta = ((3 * Math.PI / 2) - windAngle + shipAngle) % (2 * Math.PI);
+    let magnitude = -(Math.sin(2 - Math.sin(theta)) + Math.cos(theta) * Math.cos(theta));
+
+    shipAcceleration[0] = Math.cos(theta) * magnitude;
+    shipAcceleration[1] = Math.sin(theta) * magnitude;
+}
+
+function updateVelocity() {
+    shipVelocity[0] += shipAcceleration[0] * dt;
+    shipVelocity[1] += shipAcceleration[1] * dt;
+}
+
+function getShipSpeed() {
+    return Math.sqrt(Math.pow(shipVelocity[0], 2) + Math.pow(shipVelocity[1], 2));
+}
+
+function updatePosition() {
+    shipPosition[0] += shipVelocity[0] * dt + 0.5 * shipAcceleration[0] * dt * dt;
+    shipPosition[1] += shipVelocity[1] * dt + 0.5 * shipAcceleration[1] * dt * dt;
+    shipPath.push([...shipPosition]); // Clone the current position for wake
+}
+
+window.onload = init;
+
+function init() {
+    shipCanvas = document.getElementById('shipLayer');
+    shipContext = shipCanvas.getContext('2d');
+
+    oceanCanvas = document.getElementById('oceanLayer');
+    oceanContext = oceanCanvas.getContext('2d');
+
+    // Dynamically set canvas size based on the window size
+    resizeCanvas();
+
+    // Add event listener for key presses
+    window.addEventListener('keydown', handleKeydown);
+
+    // Add event listener for window resize
+    window.addEventListener('resize', resizeCanvas);
+
+    // Start the first frame request
+    window.requestAnimationFrame(gameLoop);
+}
+
+function resizeCanvas() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // Update canvas size to match window dimensions
+    shipCanvas.width = width;
+    shipCanvas.height = height;
+    oceanCanvas.width = width;
+    oceanCanvas.height = height;
+}
+
+function handleKeydown(event) {
+    const rotationSpeed = getShipSpeed() / 5000; // Rotation speed in radians
+
+    switch (event.key) {
+        case 'a':
+            shipAngle -= rotationSpeed; // Rotate counterclockwise
+            break;
+        case 'd':
+            shipAngle += rotationSpeed; // Rotate clockwise
+            break;
+        case ' ':
+            event.preventDefault(); // Prevent scrolling when the spacebar is pressed
+            const audio = document.getElementById('myAudio');
+            audio.play();
+            break;
+    }
+}
+
+function gameLoop() {
+    updateAcceleration();
+    updateVelocity();
+    updatePosition();
+
+    draw();
+
+    // Keep requesting new frames
+    window.requestAnimationFrame(gameLoop);
+}
+
+function updateOceanPosition() {
+    // Adjust the ocean's position based on the ship's velocity
+    oceanPosition[0] -= shipVelocity[0] * dt; // Move horizontally in response to ship's horizontal velocity
+    oceanPosition[1] -= shipVelocity[1] * dt; // Move vertically in response to ship's vertical velocity
+}
+
+function drawOcean() {
+    oceanContext.clearRect(0, 0, oceanCanvas.width, oceanCanvas.height); // Clear the ocean canvas
+
+    // Draw the repeating background image
+    let pattern = oceanContext.createPattern(waterImage, 'repeat'); // Create repeating pattern
+
+    // Set the fill style to the repeating pattern
+    oceanContext.fillStyle = pattern;
+
+    // Fill the canvas with the repeating pattern
+    oceanContext.fillRect(0, 0, oceanCanvas.width, oceanCanvas.height);
+}
+
+function draw() {
+    // Update the ocean's position
+    updateOceanPosition();
+
+    // Clear the ship canvas and draw the ship, wake, etc.
+    shipContext.clearRect(0, 0, shipCanvas.width, shipCanvas.height); 
+    drawShip();
+    drawWake();
+    drawUI();
+
+    // Draw the ocean as the background
+    drawOcean();
+}
+
+function drawShip() {
+    let width = 40;
+    let height = 140;
+
+    // Save the current shipContext state
+    shipContext.save();
+
+    // Translate and rotate the canvas
+    shipContext.translate(shipCanvas.width / 2, shipCanvas.height / 2);
+    shipContext.rotate(shipAngle);
+
+    shipContext.beginPath(); // Starting a new path to avoid persisting old paths
+    shipContext.fillStyle = '#7c4426';
+    shipContext.fillRect(width / 2, height / 2, -width, -height);
+    shipContext.moveTo(-width / 2, height / 2);
+    shipContext.quadraticCurveTo(-width * (4 / 5), 0, -width / 2, -height / 2);
+
+    shipContext.moveTo(width / 2, -height / 2);
+    shipContext.quadraticCurveTo(width * (4 / 5), 0, width / 2, height / 2);
+
+    shipContext.moveTo(width / 2, -(height / 2) + 1);
+    shipContext.bezierCurveTo(-width / 2, -height,
+        width / 2, -height,
+        -width / 2, -(height / 2) + 1);
+
+    shipContext.moveTo(width / 2, height / 2);
+    shipContext.quadraticCurveTo(0, height * (3 / 5), -width / 2, height / 2);
+
+    shipContext.fillStyle = '#7c4426';
+    shipContext.fill();
+    shipContext.closePath();
+
+
+    // Bowsprit
+    shipContext.fillStyle = '#b3664c';
+    shipContext.fillRect(-1.5, -height, 3, 70);
+    shipContext.fillStyle = '#f9f6f5';
+    shipContext.fillRect(-width * (2 / 5), -height * (48 / 50), (4 / 5) * width, 2);
+
+    // foremast
+    shipContext.beginPath();
+    shipContext.fillStyle = '#b3664c';
+    shipContext.arc(0, -height * (2 / 5), 5, 0, 2 * Math.PI);
+    shipContext.fill();
+    shipContext.fillStyle = '#f9f6f5';
+    shipContext.fillRect(-(8 / 7) * width, -height * (2 / 5), (16 / 7) * width, 2);
+    shipContext.closePath();
+
+    // main mast
+    shipContext.beginPath();
+    shipContext.fillStyle = '#b3664c';
+    shipContext.arc(0, 0, 5, 0, 2 * Math.PI);
+    shipContext.fill();
+    shipContext.fillStyle = '#f9f6f5';
+    shipContext.fillRect(-(7 / 5) * width, 0, (14 / 5) * width, 2);
+    shipContext.closePath();
+
+    // Mizzen mast
+    shipContext.beginPath();
+    shipContext.fillStyle = '#b3664c';
+    shipContext.arc(0, height / 2.5, 5, 0, 2 * Math.PI);
+    shipContext.fill();
+    shipContext.fillStyle = '#f9f6f5';
+    shipContext.fillRect(-(8 / 7) * width, height / 2.5, (16 / 7) * width, 2);
+    shipContext.closePath();
+
+    // Restore the context to its previous state
+    shipContext.restore();
+}
+
+function drawWake() {
+    shipContext.save();
+
+    const maxDistance = 256; // Maximum distance behind the ship (in pixels)
+    const shipX = shipPosition[0];
+    const shipY = shipPosition[1];
+
+    for (let i = 0; i < shipPath.length; i++) {
+        let [x, y] = shipPath[i];
+
+        // Calculate distance from the ship
+        const distance = Math.sqrt(Math.pow(x - shipX, 2) + Math.pow(y - shipY, 2));
+
+        // Only draw if the distance is within the max distance (behind the ship)
+        if (distance > 0 && distance <= maxDistance) {
+            // Calculate the opacity based on the distance
+            let opacity = 0.5 - distance / maxDistance; // Fade from 1 to 0
+
+            // Set the fill style with dynamic opacity
+            shipContext.fillStyle = `rgba(255, 255, 253, ${opacity})`;
+
+            // Draw the wake segment
+            shipContext.fillRect(x - 25, y - 30, 50, 1);
+        }
+    }
+
+    shipContext.restore();
+}
+
+function drawUI() {
+    shipContext.save();
+
+    shipContext.font = "20px sans-serif";
+    shipContext.fillStyle = "#000000";
+
+    let degrees = Math.round((shipAngle * (180 / Math.PI)) % 360);
+    let speed = Math.round((getShipSpeed() + Number.EPSILON) * 100) / 100;
+
+    shipContext.fillText(`Speed: ${speed}`, 30, 50);
+    shipContext.fillText(`Angle: ${degrees}°`, 30, 80);
+
+    shipContext.restore();
+}
